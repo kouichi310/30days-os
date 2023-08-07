@@ -1,10 +1,10 @@
 /* asmhead.nas */
 struct BOOTINFO { /* 0x0ff0-0x0fff */
-	char cyls; /* ƒu[ƒgƒZƒNƒ^‚Í‚Ç‚±‚Ü‚ÅƒfƒBƒXƒN‚ğ“Ç‚ñ‚¾‚Ì‚© */
-	char leds; /* ƒu[ƒg‚ÌƒL[ƒ{[ƒh‚ÌLED‚Ìó‘Ô */
-	char vmode; /* ƒrƒfƒIƒ‚[ƒh  ‰½ƒrƒbƒgƒJƒ‰[‚© */
+	char cyls; /* ï¿½uï¿½[ï¿½gï¿½Zï¿½Nï¿½^ï¿½Í‚Ç‚ï¿½ï¿½Ü‚Åƒfï¿½Bï¿½Xï¿½Nï¿½ï¿½Ç‚ñ‚¾‚Ì‚ï¿½ */
+	char leds; /* ï¿½uï¿½[ï¿½gï¿½ï¿½ï¿½ÌƒLï¿½[ï¿½{ï¿½[ï¿½hï¿½ï¿½LEDï¿½Ìï¿½ï¿½ */
+	char vmode; /* ï¿½rï¿½fï¿½Iï¿½ï¿½ï¿½[ï¿½h  ï¿½ï¿½ï¿½rï¿½bï¿½gï¿½Jï¿½ï¿½ï¿½[ï¿½ï¿½ */
 	char reserve;
-	short scrnx, scrny; /* ‰æ–Ê‰ğ‘œ“x */
+	short scrnx, scrny; /* ï¿½ï¿½Ê‰ğ‘œ“x */
 	char *vram;
 };
 #define ADR_BOOTINFO	0x00000ff0
@@ -15,7 +15,9 @@ void io_cli(void);
 void io_sti(void);
 void io_stihlt(void);
 int io_in8(int port);
+int io_in32(int port);
 void io_out8(int port, int data);
+void io_out32(int port, int data);
 int io_load_eflags(void);
 void io_store_eflags(int eflags);
 void load_gdtr(int limit, int addr);
@@ -123,12 +125,12 @@ int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat);
 extern struct FIFO8 mousefifo;
 
 /* memory.c */
-#define MEMMAN_FREES		4090	/* ‚±‚ê‚Å–ñ32KB */
+#define MEMMAN_FREES		4090	/* ï¿½ï¿½ï¿½ï¿½Å–ï¿½32KB */
 #define MEMMAN_ADDR			0x003c0000
-struct FREEINFO {	/* ‚ ‚«î•ñ */
+struct FREEINFO {	/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
 	unsigned int addr, size;
 };
-struct MEMMAN {		/* ƒƒ‚ƒŠŠÇ— */
+struct MEMMAN {		/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç—ï¿½ */
 	int frees, maxfrees, lostsize, losts;
 	struct FREEINFO free[MEMMAN_FREES];
 };
@@ -159,3 +161,66 @@ void sheet_updown(struct SHTCTL *ctl, struct SHEET *sht, int height);
 void sheet_refresh(struct SHTCTL *ctl, struct SHEET *sht, int bx0, int by0, int bx1, int by1);
 void sheet_slide(struct SHTCTL *ctl, struct SHEET *sht, int vx0, int vy0);
 void sheet_free(struct SHTCTL *ctl, struct SHEET *sht);
+
+//debug.c
+#define SERIAL_PORT 0x3f8
+void debug(char str[]);
+void debug_int(int num);
+void debug_hex(unsigned int num, int num_bytes);
+void write_serial(char a);
+int is_transmit_empty();
+int init_serial();
+
+//pci.c
+#define PCI_CONF_DID_VID		0x00
+#define PCI_CONF_STATUS_COMMAND 0x04
+
+#define CONFIG_ADDRESS 			0x0cf8
+#define CONFIG_DATA				0x0cfc
+
+#define PCI_COM_IO_EN 			(1U << 0)
+#define PCI_COM_MEM_EN 			(1U << 1)
+#define PCI_COM_BUS_MASTER_EN 	(1U << 2)
+#define PCI_COM_SPECIAL_CYCLE	(1U << 3)
+#define PCI_COM_MEMW_INV_EN			(1U << 4)
+#define PCI_COM_VGA_PAL_SNP		(1U << 5)
+#define PCI_COM_PARITY_ERR_RES	(1U << 6)
+#define PCI_COM_SERR_EN			(1U << 8)
+#define PCI_COM_FAST_BACK2BACK_EN	(1U << 9)
+#define PCI_COM_INTR_DIS		(1U << 10)
+
+#define PCI_STAT_INTR			(1U << 3)
+#define PCI_STAT_MULT_FUNC		(1U << 4)
+#define PCI_STAT_66MHZ			(1U << 5)
+#define PCI_STAT_FAST_BACK2BACK	(1U << 7)
+#define PCI_STAT_DATA_PARITY_ERR (1U << 8)
+#define PCI_STAT_DEVSEL_MASK	(3U << 9)
+#define PCI_STAT_DEVSEL_FAST	(0x00 << 9)
+#define PCI_STAT_DEVSEL_MID 	(0x01 << 9)
+#define PCI_STAT_DEVSEL_LOW		(0x10 << 9)
+#define PCI_STAT_SND_TARGET_ABORT (1U << 11)
+#define PCI_STAT_RCV_TARGET_ABORT (1U << 12)
+#define PCI_STAT_RCV_MASTER_ABORT (1U << 13)
+#define PCI_STAT_SYS_ERR		(1U << 14)
+#define PCI_STAT_PARITY_ERR		(1U << 15)
+
+union PCI_CONFIG_ADDRESS_REGISTER{
+	unsigned int raw;
+	struct PCI_CONFIG_ADDRESS_BIT {
+		unsigned int reg_addr:8;
+		unsigned int func_num:3;
+		unsigned int dev_num:5;
+		unsigned int bus_num:8;
+		unsigned int _reserved:7;
+		unsigned int enable_bit:1;
+	};
+};
+
+#define NIC_BUS_NUM 			0x00
+#define NIC_DEV_NUM				0x03
+#define NIC_FUNC_NUM			0x0
+
+void dump_viv_did(unsigned char bus, unsigned char dev, unsigned char func);
+void dump_command_status(unsigned char bus, unsigned char dev, unsigned char func);
+unsigned int get_pci_conf_reg(unsigned char bus, unsigned char dev, unsigned char func, unsigned char reg);
+void set_pci_conf_reg(unsigned char bus, unsigned char dev, unsigned char func, unsigned char reg, unsigned int val);

@@ -1,0 +1,237 @@
+	.file	"debug.c"
+	.text
+	.balign 2
+.globl _init_serial
+	.def	_init_serial;	.scl	2;	.type	32;	.endef
+_init_serial:
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	$0
+	pushl	$1017
+	call	_io_out8
+	pushl	$128
+	pushl	$1019
+	call	_io_out8
+	pushl	$3
+	pushl	$1016
+	call	_io_out8
+	pushl	$0
+	pushl	$1017
+	call	_io_out8
+	addl	$32, %esp
+	pushl	$4
+	pushl	$1019
+	call	_io_out8
+	pushl	$199
+	pushl	$1018
+	call	_io_out8
+	pushl	$11
+	pushl	$1020
+	call	_io_out8
+	pushl	$30
+	pushl	$1020
+	call	_io_out8
+	addl	$32, %esp
+	pushl	$174
+	pushl	$1016
+	call	_io_out8
+	pushl	$1016
+	call	_io_in8
+	movl	$1, %edx
+	addl	$12, %esp
+	cmpl	$174, %eax
+	je	L3
+L1:
+	movl	%edx, %eax
+	leave
+	ret
+L3:
+	pushl	$15
+	pushl	$1020
+	call	_io_out8
+	xorl	%edx, %edx
+	jmp	L1
+	.balign 2
+.globl _is_transmit_empty
+	.def	_is_transmit_empty;	.scl	2;	.type	32;	.endef
+_is_transmit_empty:
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	$1021
+	call	_io_in8
+	andl	$32, %eax
+	leave
+	ret
+	.balign 2
+.globl _write_serial
+	.def	_write_serial;	.scl	2;	.type	32;	.endef
+_write_serial:
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%ebx
+	movb	8(%ebp), %bl
+L6:
+	call	_is_transmit_empty
+	testl	%eax, %eax
+	je	L6
+	movsbl	%bl,%eax
+	pushl	%eax
+	pushl	$1016
+	call	_io_out8
+	movl	-4(%ebp), %ebx
+	leave
+	ret
+	.balign 2
+.globl _debug
+	.def	_debug;	.scl	2;	.type	32;	.endef
+_debug:
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%esi
+	pushl	%ebx
+	xorl	%ebx, %ebx
+	movl	8(%ebp), %esi
+	cmpb	$0, (%esi)
+	je	L26
+L21:
+	cmpb	$10, (%ebx,%esi)
+	je	L27
+L14:
+	movsbl	(%ebx,%esi),%eax
+	pushl	%eax
+	call	_write_serial
+	popl	%ecx
+L18:
+	call	_is_transmit_empty
+	testl	%eax, %eax
+	je	L18
+	incl	%ebx
+	cmpb	$0, (%ebx,%esi)
+	jne	L21
+L26:
+	pushl	$13
+	call	_write_serial
+	pushl	$10
+	call	_write_serial
+	popl	%eax
+	popl	%edx
+L22:
+	call	_is_transmit_empty
+	testl	%eax, %eax
+	je	L22
+	leal	-8(%ebp), %esp
+	popl	%ebx
+	popl	%esi
+	popl	%ebp
+	ret
+L27:
+	pushl	$13
+	call	_write_serial
+	popl	%eax
+L15:
+	call	_is_transmit_empty
+	testl	%eax, %eax
+	je	L15
+	jmp	L14
+	.balign 2
+.globl _debug_int
+	.def	_debug_int;	.scl	2;	.type	32;	.endef
+_debug_int:
+	pushl	%ebp
+	xorl	%ecx, %ecx
+	movl	%esp, %ebp
+	pushl	%ebx
+	subl	$16, %esp
+	movl	8(%ebp), %edx
+	testl	%edx, %edx
+	jle	L42
+L32:
+	movl	%edx, %eax
+	movl	$10, %ebx
+	cltd
+	idivl	%ebx
+	addl	$48, %edx
+	movb	%dl, -20(%ebp,%ecx)
+	incl	%ecx
+	movl	%eax, %edx
+	testl	%eax, %eax
+	jg	L32
+L42:
+	movl	%ecx, %ebx
+	decl	%ebx
+	js	L44
+L37:
+	movsbl	-20(%ebp,%ebx),%eax
+	pushl	%eax
+	call	_write_serial
+	decl	%ebx
+	popl	%ecx
+	jns	L37
+L44:
+	pushl	$13
+	call	_write_serial
+	pushl	$10
+	call	_write_serial
+	popl	%eax
+	popl	%edx
+L38:
+	call	_is_transmit_empty
+	testl	%eax, %eax
+	je	L38
+	movl	-4(%ebp), %ebx
+	leave
+	ret
+	.balign 2
+.globl _debug_hex
+	.def	_debug_hex;	.scl	2;	.type	32;	.endef
+_debug_hex:
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%edi
+	pushl	%esi
+	movl	12(%ebp), %eax
+	pushl	%ebx
+	movl	8(%ebp), %edi
+	testl	%eax, %eax
+	jle	L57
+	leal	-4(,%eax,4), %esi
+	movl	%eax, %ebx
+L52:
+	movl	%edi, %eax
+	movl	%esi, %ecx
+	shrl	%cl, %eax
+	andl	$15, %eax
+	movsbl	%al,%edx
+	cmpb	$9, %al
+	jg	L50
+	leal	48(%edx), %eax
+L51:
+	andl	$127, %eax
+	subl	$4, %esi
+	pushl	%eax
+	call	_write_serial
+	decl	%ebx
+	popl	%eax
+	jne	L52
+L57:
+	pushl	$13
+	call	_write_serial
+	pushl	$10
+	call	_write_serial
+	popl	%ebx
+	popl	%esi
+L53:
+	call	_is_transmit_empty
+	testl	%eax, %eax
+	je	L53
+	leal	-12(%ebp), %esp
+	popl	%ebx
+	popl	%esi
+	popl	%edi
+	popl	%ebp
+	ret
+L50:
+	leal	55(%edx), %eax
+	jmp	L51
+	.def	_io_in8;	.scl	2;	.type	32;	.endef
+	.def	_io_out8;	.scl	2;	.type	32;	.endef
