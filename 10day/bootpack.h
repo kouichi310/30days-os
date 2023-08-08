@@ -229,11 +229,19 @@ union PCI_CONFIG_ADDRESS_REGISTER{
 #define NIC_BUS_NUM 			0x00
 #define NIC_DEV_NUM				0x03
 #define NIC_FUNC_NUM			0x0
+#define NIC_REG_IMS 			0x00d0
+#define NIC_REG_IMC				0x00d8
 
 void dump_viv_did(unsigned char bus, unsigned char dev, unsigned char func);
 void dump_command_status(unsigned char bus, unsigned char dev, unsigned char func);
 void dump_bar(unsigned char bus,unsigned char dev, unsigned char func);
+void dump_nic_ims(void);
 
 unsigned int get_pci_conf_reg(unsigned char bus, unsigned char dev, unsigned char func, unsigned char reg);
 void set_pci_conf_reg(unsigned char bus, unsigned char dev, unsigned char func, unsigned char reg, unsigned int val);
+
+void init_nic(void);
 unsigned int get_nic_reg_base(void);
+unsigned int get_nic_reg(unsigned short reg);
+void set_nic_reg(unsigned short reg, unsigned int val);
+static void disable_nic_interrupt(void);

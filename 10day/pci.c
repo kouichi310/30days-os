@@ -14,11 +14,6 @@ unsigned int get_pci_conf_reg(unsigned char bus, unsigned char dev, unsigned cha
     return io_in32(CONFIG_DATA);
 }
 
-unsigned int get_nic_reg_base(void){
-    unsigned bar = get_pci_conf_reg(NIC_BUS_NUM,NIC_DEV_NUM,NIC_FUNC_NUM,PCI_CONF_BAR);
-    return bar & PCI_BAR_MASK_MEM_ADDR;
-}
-
 void set_pci_conf_reg(unsigned char bus, unsigned char dev, unsigned char func, unsigned char reg, unsigned int val){
     union PCI_CONFIG_ADDRESS_REGISTER conf_addr;
 
@@ -155,4 +150,49 @@ void dump_bar(unsigned char bus,unsigned char dev, unsigned char func){
         }
         
     }
+}
+
+void dump_nic_ims(void){
+    unsigned int ims = get_nic_reg(NIC_REG_IMS);
+    debug("IMS");
+    debug_hex(ims,8);
+    debug("\n");
+}
+
+static unsigned int nic_reg_base;
+
+unsigned int get_nic_reg_base(void){
+    unsigned bar = get_pci_conf_reg(NIC_BUS_NUM,NIC_DEV_NUM,NIC_FUNC_NUM,PCI_CONF_BAR);
+    nic_reg_base = bar & PCI_BAR_MASK_MEM_ADDR;
+    return nic_reg_base;
+}
+
+unsigned int get_nic_reg(unsigned short reg){
+    unsigned long long addr = nic_reg_base + reg;
+    return *(volatile unsigned int *)addr;
+}
+
+void set_nic_reg(unsigned short reg, unsigned int val){
+    unsigned long long addr = nic_reg_base + reg;
+    *(volatile unsigned int *)addr = val;
+}
+
+static void disable_nic_interrupt(void){
+    unsigned int conf_data = get_pci_conf_reg(NIC_BUS_NUM,NIC_DEV_NUM,NIC_FUNC_NUM,PCI_CONF_STATUS_COMMAND);
+    conf_data &= 0x0000ffff;
+    conf_data != PCI_COM_INTR_DIS;
+    set_pci_conf_reg(NIC_BUS_NUM,NIC_DEV_NUM,NIC_FUNC_NUM,PCI_CONF_STATUS_COMMAND, conf_data);
+    set_nic_reg(NIC_REG_IMC,0xffffffff);
+}
+
+void init_nic(void){
+    unsigned int conf_data = get_pci_conf_reg(NIC_BUS_NUM,NIC_DEV_NUM,NIC_FUNC_NUM,PCI_CONF_STATUS_COMMAND);
+	conf_data &= 0x0000ffff;
+	conf_data |= PCI_COM_INTR_DIS;
+
+	set_pci_conf_reg(NIC_BUS_NUM,NIC_DEV_NUM,NIC_FUNC_NUM,PCI_CONF_STATUS_COMMAND,conf_data);
+	get_nic_reg_base();
+    disable_nic_interrupt();
+    dump_bar(NIC_BUS_NUM,NIC_DEV_NUM,NIC_FUNC_NUM);
+    dump_nic_ims();
 }
