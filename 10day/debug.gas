@@ -92,15 +92,15 @@ _debug:
 	xorl	%ebx, %ebx
 	movl	8(%ebp), %esi
 	cmpb	$0, (%esi)
-	je	L26
+	je	L22
 L21:
 	cmpb	$10, (%ebx,%esi)
-	je	L27
+	je	L26
 L14:
 	movsbl	(%ebx,%esi),%eax
 	pushl	%eax
 	call	_write_serial
-	popl	%ecx
+	popl	%eax
 L18:
 	call	_is_transmit_empty
 	testl	%eax, %eax
@@ -108,13 +108,6 @@ L18:
 	incl	%ebx
 	cmpb	$0, (%ebx,%esi)
 	jne	L21
-L26:
-	pushl	$13
-	call	_write_serial
-	pushl	$10
-	call	_write_serial
-	popl	%eax
-	popl	%edx
 L22:
 	call	_is_transmit_empty
 	testl	%eax, %eax
@@ -124,10 +117,10 @@ L22:
 	popl	%esi
 	popl	%ebp
 	ret
-L27:
+L26:
 	pushl	$13
 	call	_write_serial
-	popl	%eax
+	popl	%edx
 L15:
 	call	_is_transmit_empty
 	testl	%eax, %eax
@@ -144,8 +137,8 @@ _debug_int:
 	subl	$16, %esp
 	movl	8(%ebp), %edx
 	testl	%edx, %edx
-	jle	L42
-L32:
+	jle	L41
+L31:
 	movl	%edx, %eax
 	movl	$10, %ebx
 	cltd
@@ -155,29 +148,22 @@ L32:
 	incl	%ecx
 	movl	%eax, %edx
 	testl	%eax, %eax
-	jg	L32
-L42:
+	jg	L31
+L41:
 	movl	%ecx, %ebx
 	decl	%ebx
-	js	L44
-L37:
+	js	L37
+L36:
 	movsbl	-20(%ebp,%ebx),%eax
 	pushl	%eax
 	call	_write_serial
 	decl	%ebx
 	popl	%ecx
-	jns	L37
-L44:
-	pushl	$13
-	call	_write_serial
-	pushl	$10
-	call	_write_serial
-	popl	%eax
-	popl	%edx
-L38:
+	jns	L36
+L37:
 	call	_is_transmit_empty
 	testl	%eax, %eax
-	je	L38
+	je	L37
 	movl	-4(%ebp), %ebx
 	leave
 	ret
@@ -193,45 +179,73 @@ _debug_hex:
 	pushl	%ebx
 	movl	8(%ebp), %edi
 	testl	%eax, %eax
-	jle	L57
+	jle	L51
 	leal	-4(,%eax,4), %esi
 	movl	%eax, %ebx
-L52:
+L50:
 	movl	%edi, %eax
 	movl	%esi, %ecx
 	shrl	%cl, %eax
 	andl	$15, %eax
 	movsbl	%al,%edx
 	cmpb	$9, %al
-	jg	L50
+	jg	L48
 	leal	48(%edx), %eax
-L51:
+L49:
 	andl	$127, %eax
 	subl	$4, %esi
 	pushl	%eax
 	call	_write_serial
 	decl	%ebx
 	popl	%eax
-	jne	L52
-L57:
-	pushl	$13
-	call	_write_serial
-	pushl	$10
-	call	_write_serial
-	popl	%ebx
-	popl	%esi
-L53:
+	jne	L50
+L51:
 	call	_is_transmit_empty
 	testl	%eax, %eax
-	je	L53
+	je	L51
 	leal	-12(%ebp), %esp
 	popl	%ebx
 	popl	%esi
 	popl	%edi
 	popl	%ebp
 	ret
-L50:
+L48:
 	leal	55(%edx), %eax
-	jmp	L51
+	jmp	L49
+	.balign 2
+.globl _debug_hex_byte
+	.def	_debug_hex_byte;	.scl	2;	.type	32;	.endef
+_debug_hex_byte:
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%edi
+	pushl	%esi
+	pushl	%ebx
+	movl	12(%ebp), %esi
+	xorl	%ebx, %ebx
+	movl	8(%ebp), %edi
+	cmpl	%esi, %ebx
+	jl	L60
+L61:
+	call	_is_transmit_empty
+	testl	%eax, %eax
+	je	L61
+	leal	-12(%ebp), %esp
+	popl	%ebx
+	popl	%esi
+	popl	%edi
+	popl	%ebp
+	ret
+L60:
+	pushl	$2
+	movzbl	(%ebx,%edi), %eax
+	pushl	%eax
+	incl	%ebx
+	call	_debug_hex
+	cmpl	%esi, %ebx
+	popl	%eax
+	popl	%edx
+	jl	L60
+	jmp	L61
 	.def	_io_in8;	.scl	2;	.type	32;	.endef
 	.def	_io_out8;	.scl	2;	.type	32;	.endef

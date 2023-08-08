@@ -39,8 +39,6 @@ void debug(char str[]){
         write_serial(str[i]);
         while(is_transmit_empty()==0);
     }
-    write_serial('\r');
-    write_serial('\n');
     while(is_transmit_empty()==0);
 }
 
@@ -57,8 +55,6 @@ void debug_int(int num){
     for(i=count-1;i>=0;i--){
         write_serial(digits[i]);
     }
-    write_serial('\r');
-    write_serial('\n');
     while(is_transmit_empty()==0);
 }
 
@@ -71,7 +67,15 @@ void debug_hex(unsigned int value, int num_bytes){
         str+= (str<10)?'0':('A'-10);
         write_serial(str);
     }
-    write_serial('\r');
-    write_serial('\n');
+    while(is_transmit_empty()==0);
+}
+
+void debug_hex_byte(unsigned char *byte, int bytes_len){
+    char str;
+    int i;
+
+    for(i=0;i<bytes_len;i++){
+        debug_hex(byte[i],2);
+    }
     while(is_transmit_empty()==0);
 }

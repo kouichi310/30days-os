@@ -141,6 +141,7 @@ unsigned int memman_alloc(struct MEMMAN *man, unsigned int size);
 int memman_free(struct MEMMAN *man, unsigned int addr, unsigned int size);
 unsigned int memman_alloc_4k(struct MEMMAN *man, unsigned int size);
 int memman_free_4k(struct MEMMAN *man, unsigned int addr, unsigned int size);
+void memcpy(void *dst, void *src, unsigned long long size);
 
 /* sheet.c */
 #define MAX_SHEETS		256
@@ -167,6 +168,7 @@ void sheet_free(struct SHTCTL *ctl, struct SHEET *sht);
 void debug(char str[]);
 void debug_int(int num);
 void debug_hex(unsigned int num, int num_bytes);
+void debug_hex_byte(unsigned char *byte, int bytes_len);
 void write_serial(char a);
 int is_transmit_empty();
 int init_serial();
@@ -226,12 +228,6 @@ union PCI_CONFIG_ADDRESS_REGISTER{
 	};
 };
 
-#define NIC_BUS_NUM 			0x00
-#define NIC_DEV_NUM				0x03
-#define NIC_FUNC_NUM			0x0
-#define NIC_REG_IMS 			0x00d0
-#define NIC_REG_IMC				0x00d8
-
 void dump_viv_did(unsigned char bus, unsigned char dev, unsigned char func);
 void dump_command_status(unsigned char bus, unsigned char dev, unsigned char func);
 void dump_bar(unsigned char bus,unsigned char dev, unsigned char func);
@@ -240,8 +236,82 @@ void dump_nic_ims(void);
 unsigned int get_pci_conf_reg(unsigned char bus, unsigned char dev, unsigned char func, unsigned char reg);
 void set_pci_conf_reg(unsigned char bus, unsigned char dev, unsigned char func, unsigned char reg, unsigned int val);
 
+//nic.c
+#define NIC_REG_IMS 			0x00d0
+#define NIC_REG_IMC				0x00d8
+#define NIC_REG_RCTL	0x0100
+#define NIC_REG_RDBAL	0x2800
+#define NIC_REG_RDBAH	0x2804
+#define NIC_REG_RDLEN	0x2808
+#define NIC_REG_RDH	0x2810
+#define NIC_REG_RDT	0x2818
+#define NIC_REG_TCTL	0x0400
+#define NIC_REG_TDBAL	0x3800
+#define NIC_REG_TDBAH	0x3804
+#define NIC_REG_TDLEN	0x3808
+#define NIC_REG_TDH	0x3810
+#define NIC_REG_TDT	0x3818
+#define NIC_REG_EERD 0x0014
+
+#define NIC_RDESC_STAT_PIF		(1U << 7)
+#define NIC_RDESC_STAT_DD		(1U << 0)
+#define PACKET_BUFFER_SIZE		1024
+
+#define NIC_BUS_NUM 			0x00
+#define NIC_DEV_NUM				0x03
+#define NIC_FUNC_NUM			0x0
+#define RXDESC_NUM				80
+#define TXDESC_NUM				8
+#define ALIGN_MARGIN			16
+#define NIC_RCTL_BSIZE_1024B 	(0x01 << 16)
+#define PACKET_RBSIZE_BIT		NIC_RCTL_BSIZE_1024B
+#define NIC_RCTL_BAM	(1U << 15)
+#define NIC_RCTL_EN		(1U << 1)
+#define NIC_RCTL_SBP	(1U << 2)
+#define NIC_RCTL_UPE	(1U << 3)
+#define NIC_RCTL_MPE	(1U << 4)
+#define NIC_RCTL_LPE	(1U << 5)
+
+#define NIC_TCTL_EN	(1U << 1)
+#define NIC_TCTL_PSP	(1U << 3)
+#define NIC_TCTL_CT_SHIFT	4
+#define NIC_TCTL_COLD_SHIFT	12
+#define NIC_TDESC_CMD_RS	(1U << 3)
+#define NIC_TDESC_CMD_EOP	(1U << 0)
+#define NIC_TDESC_STA_DD	(1U << 0)
+#define NIC_TDESC_STA_EC	(1U << 1)
+#define NIC_TDESC_STA_LC	(1U << 2)
+#define NIC_TDESC_STA_TU	(1U << 3)
+
+#define NIC_EERD_START	(1U << 0)
+#define NIC_EERD_DONE	(1U << 4)
+#define NIC_EERD_ADDRESS_SHIFT	8
+#define NIC_EERD_DATA_SHIFT	16
+#define NIC_REG_RAL(n)	(0x5400 + ((n) * 8))
+#define NIC_REG_RAH(n)	(0x5404 + ((n) * 8))
+
+#define EERD_TIMEOUT 1000
+
 void init_nic(void);
 unsigned int get_nic_reg_base(void);
 unsigned int get_nic_reg(unsigned short reg);
 void set_nic_reg(unsigned short reg, unsigned int val);
 static void disable_nic_interrupt(void);
+unsigned short dump_frame(void);
+unsigned short receive_frame(void *buf);
+unsigned char send_frame(void *buf, unsigned short len);
+
+//ethernet.c
+struct ETHERNET
+{
+    unsigned char *dst;
+    unsigned char *src;
+    unsigned char *type;
+    unsigned char *payload;
+    unsigned short len;
+};
+
+#define MAC_ADDR_LEN 6
+#define ETHERNET_TYPE_LEN 2
+void init_ethernet(unsigned char *buf);
+unsigned short ethernet_send(struct ETHERNET frame);
