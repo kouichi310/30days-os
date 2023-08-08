@@ -33,33 +33,35 @@ void HariMain(void)
 	int serial = init_serial();
 	debug("hariboteos\nHello, World\n");
 
-	unsigned char *ethernet_buf  = (unsigned char *) memman_alloc_4k(memman, 380);
+	unsigned char *ethernet_buf  = (unsigned char *) memman_alloc_4k(memman, ETHERNET_BUFFER_LEN);
+	unsigned char *ip_buf  = (unsigned char *) memman_alloc_4k(memman, IP_BUFFER_LEN);
 	init_nic();
 	init_ethernet(ethernet_buf);
-
-	// while(1){
-	// 	if(dump_frame() > 0)debug("\n");
-	// }
-
-	unsigned char dst[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
-	unsigned char src[] = {0x52,0x54,0x00,0x12,0x34,0x56};
-	unsigned char type[] = {0x08,0x06};
-	unsigned char data[] = {
-							0x00,0x01,0x08,0x00,0x06,0x04,0x00,0x01,0x52,0x54,0x00,0x12,0x34,0x56,0x0a,0x00,0x02,0x0f,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x0a,0x00,0x02,0x02
-						};
-	unsigned short len = sizeof(data);
-
-	struct ETHERNET frame;
-	frame.dst = dst;
-	frame.src = src;
-	frame.type = type;
-	frame.payload = data;
-	frame.len = len;
-
-	ethernet_send(frame);
+	init_ip(ip_buf);
 
 	while(1){
+		if(dump_frame() > 0)debug("\n");
 	}
+
+	// unsigned char dst[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+	// unsigned char src[] = {0x52,0x54,0x00,0x12,0x34,0x56};
+	// unsigned char type[] = {0x08,0x06};
+	// unsigned char data[] = {
+	// 						0x00,0x01,0x08,0x00,0x06,0x04,0x00,0x01,0x52,0x54,0x00,0x12,0x34,0x56,0x0a,0x00,0x02,0x0f,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x0a,0x00,0x02,0x02
+	// 					};
+	// unsigned short len = sizeof(data);
+
+	// struct ETHERNET frame;
+	// frame.dst = dst;
+	// frame.src = src;
+	// frame.type = type;
+	// frame.payload = data;
+	// frame.len = len;
+
+	// ethernet_send(frame);
+
+	// while(1){
+	// }
 
 	init_palette();
 	shtctl = shtctl_init(memman, binfo->vram, binfo->scrnx, binfo->scrny);

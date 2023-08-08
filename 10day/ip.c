@@ -1,16 +1,19 @@
 #include "bootpack.h"
 
-unsigned char *ethernet_buf;
+unsigned char *ip_buf;
 
-void init_ethernet(unsigned char *buf){
-    ethernet_buf = buf;
+void init_ip(unsigned char *buf){
+    ip_buf = buf;
 }
 
-unsigned short ethernet_send(struct ETHERNET frame){
-    memcpy(ethernet_buf,frame.dst,MAC_ADDR_LEN);
-    memcpy(ethernet_buf+MAC_ADDR_LEN,frame.src,MAC_ADDR_LEN);
-    memcpy(ethernet_buf+2*MAC_ADDR_LEN,frame.type,ETHERNET_TYPE_LEN);
-    memcpy(ethernet_buf+2*MAC_ADDR_LEN+ETHERNET_TYPE_LEN,frame.payload,frame.len);
+void ip_cupsel(struct IP packet){
+    unsigned char version_ihl = packet.version << 4 | packet.ihl;
+    unsigned char flag_offset = packet.flags << 5 | packet.flaggment_offset[0];
+    memcpy(ip_buf,packet.version + packet.ihl,1);
+    memcpy(ip_buf+1,packet.tos,1);
+    memcpy(ip_buf+2,packet.len,2);
+    memcpy(ip_buf+4,packet.identification,2);
+    memcpy(ip_buf+6,(packet.flags >> 5)|(packet.flaggment_offset),2);
 
     unsigned short len = 2*MAC_ADDR_LEN+ETHERNET_TYPE_LEN+frame.len;
     debug_hex_byte(ethernet_buf,len);
@@ -35,6 +38,4 @@ unsigned short ethernet_send(struct ETHERNET frame){
             debug_hex(status,1);
             break;
     }
-
-    return status;
 }

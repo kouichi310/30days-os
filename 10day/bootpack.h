@@ -313,5 +313,26 @@ struct ETHERNET
 
 #define MAC_ADDR_LEN 6
 #define ETHERNET_TYPE_LEN 2
+#define ETHERNET_BUFFER_LEN 380
 void init_ethernet(unsigned char *buf);
 unsigned short ethernet_send(struct ETHERNET frame);
+
+//ip.c
+struct IP
+{
+	unsigned char version;
+	unsigned char ihl;
+	unsigned char tos;
+	unsigned char *len;
+	unsigned char *identification;
+	unsigned char flags;
+	unsigned char *flaggment_offset;
+	unsigned char ttl;
+	unsigned char protocol;
+	unsigned char *checksum;
+	unsigned char *src;
+	unsigned char *dst;
+};
+#define IP_BUFFER_LEN 380
+void init_ip(unsigned char *buf);
+void ip_cupsel(struct IP packet);
