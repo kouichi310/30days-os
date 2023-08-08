@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "bootpack.h": "c",
+        "stdio.h": "c"
+    }
+}

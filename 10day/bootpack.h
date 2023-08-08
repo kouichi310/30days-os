@@ -174,6 +174,7 @@ int init_serial();
 //pci.c
 #define PCI_CONF_DID_VID		0x00
 #define PCI_CONF_STATUS_COMMAND 0x04
+#define PCI_CONF_BAR			0x10
 
 #define CONFIG_ADDRESS 			0x0cf8
 #define CONFIG_DATA				0x0cfc
@@ -204,6 +205,15 @@ int init_serial();
 #define PCI_STAT_SYS_ERR		(1U << 14)
 #define PCI_STAT_PARITY_ERR		(1U << 15)
 
+#define PCI_BAR_MASK_IO			0x00000001
+#define PCI_BAR_MASK_MEM_TYPE	0x00000006
+#define PCI_BAR_MEM_TYPE_32BIT	0x00000000
+#define PCI_BAR_MEM_TYPE_1M		0x00000002
+#define PCI_BAR_MEM_TYPE_64BIT	0x00000004
+#define PCI_BAR_MASK_MEM_PREFETCHABLE	0x00000008
+#define PCI_BAR_MASK_MEM_ADDR	0xfffffff0
+#define PCI_BAR_MASK_IO_ADDR	0xfffffffc
+
 union PCI_CONFIG_ADDRESS_REGISTER{
 	unsigned int raw;
 	struct PCI_CONFIG_ADDRESS_BIT {
@@ -222,5 +232,8 @@ union PCI_CONFIG_ADDRESS_REGISTER{
 
 void dump_viv_did(unsigned char bus, unsigned char dev, unsigned char func);
 void dump_command_status(unsigned char bus, unsigned char dev, unsigned char func);
+void dump_bar(unsigned char bus,unsigned char dev, unsigned char func);
+
 unsigned int get_pci_conf_reg(unsigned char bus, unsigned char dev, unsigned char func, unsigned char reg);
 void set_pci_conf_reg(unsigned char bus, unsigned char dev, unsigned char func, unsigned char reg, unsigned int val);
+unsigned int get_nic_reg_base(void);

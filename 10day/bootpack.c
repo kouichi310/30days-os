@@ -32,13 +32,21 @@ void HariMain(void)
 
 	int serial = init_serial();
 	debug("hariboteos\nHello, World\n");
-	debug_int(1234);
 
-	dump_viv_did(NIC_BUS_NUM,NIC_DEV_NUM,NIC_FUNC_NUM);
-	dump_command_status(NIC_BUS_NUM,NIC_DEV_NUM,NIC_FUNC_NUM);
+	unsigned int conf_data = get_pci_conf_reg(NIC_BUS_NUM,NIC_DEV_NUM,NIC_FUNC_NUM,PCI_CONF_STATUS_COMMAND);
+	conf_data &= 0x0000ffff;
+	conf_data |= PCI_COM_INTR_DIS;
+
+	set_pci_conf_reg(NIC_BUS_NUM,NIC_DEV_NUM,NIC_FUNC_NUM,PCI_CONF_STATUS_COMMAND,conf_data);
+
+	//dump_viv_did(NIC_BUS_NUM,NIC_DEV_NUM,NIC_FUNC_NUM);
+	//dump_command_status(NIC_BUS_NUM,NIC_DEV_NUM,NIC_FUNC_NUM);
+	//dump_bar(NIC_FUNC_NUM,NIC_DEV_NUM,NIC_FUNC_NUM);
+	unsigned int base = get_nic_reg_base();
+	debug_hex(base, 8);
 
 	//shutdown
-	//io_out32(0x4004,0x3400);
+	//io_out32(0xB004,0x2000);
 
 	init_palette();
 	shtctl = shtctl_init(memman, binfo->vram, binfo->scrnx, binfo->scrny);

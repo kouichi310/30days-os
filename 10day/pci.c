@@ -14,6 +14,11 @@ unsigned int get_pci_conf_reg(unsigned char bus, unsigned char dev, unsigned cha
     return io_in32(CONFIG_DATA);
 }
 
+unsigned int get_nic_reg_base(void){
+    unsigned bar = get_pci_conf_reg(NIC_BUS_NUM,NIC_DEV_NUM,NIC_FUNC_NUM,PCI_CONF_BAR);
+    return bar & PCI_BAR_MASK_MEM_ADDR;
+}
+
 void set_pci_conf_reg(unsigned char bus, unsigned char dev, unsigned char func, unsigned char reg, unsigned int val){
     union PCI_CONFIG_ADDRESS_REGISTER conf_addr;
 
@@ -105,4 +110,49 @@ void dump_command_status(unsigned char bus, unsigned char dev, unsigned char fun
         debug("SYS_ERR ");
     if (status & PCI_STAT_PARITY_ERR)   
         debug("PARITY_ERR");
+}
+
+void dump_bar(unsigned char bus,unsigned char dev, unsigned char func){
+    unsigned int bar = get_pci_conf_reg(bus,dev,func,PCI_CONF_BAR);
+    debug("\nBAR");
+    debug_hex(bar,8);
+    debug("\n");
+
+    if(bar & PCI_BAR_MASK_IO){
+        debug("IO BASE");
+        debug_hex(bar & PCI_BAR_MASK_IO_ADDR,8);
+        debug("\n");
+    }else{
+        unsigned int bar_32;
+        unsigned long long bar_upper;
+        unsigned long long bar_64;
+        switch (bar&PCI_BAR_MASK_MEM_TYPE)
+        {
+        case PCI_BAR_MEM_TYPE_32BIT:
+            debug("MEM BASE 32BIT");
+            bar_32 = bar & PCI_BAR_MASK_MEM_ADDR;
+            debug_hex(bar_32, 8);
+            debug("\n");
+            break;
+        
+        case PCI_BAR_MEM_TYPE_1M:
+            debug("MEM BASE 1M");
+            bar_32 = bar & PCI_BAR_MASK_MEM_ADDR;
+            debug_hex(bar_32,8);
+            break;
+        case PCI_BAR_MEM_TYPE_64BIT:
+            bar_upper = get_pci_conf_reg(bus,dev,func,PCI_CONF_BAR+4);
+            bar_64 = (bar_upper << 32) + (bar & PCI_BAR_MASK_MEM_ADDR);
+            debug("MEM BASE 64BIT");
+            debug_hex(bar_64,16);
+            debug("\n");
+        }
+        if (bar & PCI_BAR_MASK_MEM_PREFETCHABLE)
+        {
+            debug("PREFETCHABLE\n");
+        }else{
+            debug("NON PREFETCHABLE\n");
+        }
+        
+    }
 }
