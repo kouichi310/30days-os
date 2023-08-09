@@ -44,6 +44,7 @@ void debug(char str[]){
 
 //max:10digits
 void debug_int(int num){
+    debug("\n");
     int i,count=0;
     char digits[10];
 
@@ -74,6 +75,7 @@ void debug_hex_byte(unsigned char *byte, int bytes_len){
     char str;
     int i;
 
+    debug("\n");
     for(i=0;i<bytes_len;i++){
         debug_hex(byte[i],2);
     }

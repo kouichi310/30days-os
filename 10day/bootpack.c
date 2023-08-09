@@ -39,11 +39,38 @@ void HariMain(void)
 	init_ethernet(ethernet_buf);
 	init_ip(ip_buf);
 
+	struct IP packet = {0};
+	unsigned char data[] = {
+						0x08,0x00,0x4d,0x4d,0x00,0x01,0x00,0x0e,0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x68,0x69,0x6a,0x6b,0x6c,0x6d,0x6e,0x6f,0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x68,0x69
+					};
+	unsigned char dst[] = {0x0a,0x00,0x02,0x02};
+	unsigned char src[] = {0x0a,0x00,0x02,0x0f};
+	packet.version = 0x04;
+	packet.ihl = DEFAULT_HEADER_LEN;
+	packet.tos = 0x00;
+	packet.len = (DEFAULT_HEADER_LEN*4+sizeof(data) << 8) | (DEFAULT_HEADER_LEN*4+sizeof(data) >> 8);
+	packet.identification = 0;
+	packet.flags = 0;
+	packet.flaggment_offset = 0;
+	packet.ttl = 0x34;
+	packet.protocol = 0x01; //icmp
+	packet.checksum = 0; //todo
+	packet.payload_len = sizeof(data);
+	memcpy(packet.src,src,IP_ADDR_LEN);
+	memcpy(packet.dst,dst,IP_ADDR_LEN);
+	memcpy(packet.payload,data,sizeof(data));
+
+	unsigned short checksum = get_checksum(packet);
+	packet.checksum = checksum;
+	
+	ip_send(packet);
+
 	while(1){
-		if(dump_frame() > 0)debug("\n");
+		//ethernet_receive();
+		//if(dump_frame() > 0)debug("\n");
 	}
 
-	// unsigned char dst[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+	// unsigned char dst[] = {0x52,0x55,0x0a,0x00,0x02,0x02};
 	// unsigned char src[] = {0x52,0x54,0x00,0x12,0x34,0x56};
 	// unsigned char type[] = {0x08,0x06};
 	// unsigned char data[] = {
@@ -52,10 +79,10 @@ void HariMain(void)
 	// unsigned short len = sizeof(data);
 
 	// struct ETHERNET frame;
-	// frame.dst = dst;
-	// frame.src = src;
-	// frame.type = type;
-	// frame.payload = data;
+	// memcpy(frame.dst,dst,MAC_ADDR_LEN);
+	// memcpy(frame.src,src,MAC_ADDR_LEN);
+	// memcpy(frame.type,type,ETHERNET_TYPE_LEN);
+	// memcpy(frame.payload,data,len);
 	// frame.len = len;
 
 	// ethernet_send(frame);

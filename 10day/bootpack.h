@@ -302,37 +302,45 @@ unsigned short receive_frame(void *buf);
 unsigned char send_frame(void *buf, unsigned short len);
 
 //ethernet.c
-struct ETHERNET
-{
-    unsigned char *dst;
-    unsigned char *src;
-    unsigned char *type;
-    unsigned char *payload;
-    unsigned short len;
-};
-
 #define MAC_ADDR_LEN 6
 #define ETHERNET_TYPE_LEN 2
 #define ETHERNET_BUFFER_LEN 380
 void init_ethernet(unsigned char *buf);
+
+struct ETHERNET
+{
+    unsigned char dst[MAC_ADDR_LEN];
+    unsigned char src[MAC_ADDR_LEN];
+    unsigned char type[ETHERNET_TYPE_LEN];
+    unsigned char payload[ETHERNET_BUFFER_LEN];
+    unsigned short len;
+};
+
 unsigned short ethernet_send(struct ETHERNET frame);
+struct ETHERNET ethernet_receive(void);
 
 //ip.c
+#define IP_BUFFER_LEN 380
+#define IP_ADDR_LEN 4
+#define DEFAULT_HEADER_LEN 0x05
 struct IP
 {
 	unsigned char version;
 	unsigned char ihl;
 	unsigned char tos;
-	unsigned char *len;
-	unsigned char *identification;
+	unsigned short len;
+	unsigned short identification;
 	unsigned char flags;
-	unsigned char *flaggment_offset;
+	unsigned short flaggment_offset;
 	unsigned char ttl;
 	unsigned char protocol;
-	unsigned char *checksum;
-	unsigned char *src;
-	unsigned char *dst;
+	unsigned short checksum;
+	unsigned char src[IP_ADDR_LEN];
+	unsigned char dst[IP_ADDR_LEN];
+	unsigned char payload[IP_BUFFER_LEN];
+	unsigned short payload_len;
 };
-#define IP_BUFFER_LEN 380
+
 void init_ip(unsigned char *buf);
-void ip_cupsel(struct IP packet);
+void ip_send(struct IP packet);
+unsigned short get_checksum(struct IP packet);
